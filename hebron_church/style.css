@@ -1446,3 +1446,29 @@ p {
         font-size: 1.1rem;
     }
 }
+/* ---------- CONTACT FORM STATUS MESSAGE ---------- */
+.form-status { 
+  margin-top: 16px; 
+  padding: 14px 16px; 
+  border-radius: 10px; 
+  font-size: .95rem; 
+  font-weight: 500; 
+  line-height: 1.6; 
+  text-align: center; 
+} 
+
+.form-status[hidden] { 
+  display: none; 
+} 
+
+.form-status.success { 
+  color: #0f5132; 
+  background: #e7f6ee; 
+  border: 1px solid #b7e1c9; 
+} 
+
+.form-status.error { 
+  color: #a42a1e; 
+  background: #fdecea; 
+  border: 1px solid #f3c1bb; 
+}
