@@ -118,22 +118,74 @@ const revealObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 revealElements.forEach(el => revealObserver.observe(el));
 
-// Contact form demo
+// Contact form
 const contactForm = document.getElementById('contactForm');
-contactForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const message = document.getElementById('message').value.trim();
-    if (name && email && message) {
-        alert(currentLang === 'am'
-            ? ' አመሰግናለሁ፣ ' + name + '! መልእክትዎ ተልኳል። በቅርቡ እንመልስልዎታለን።'
-            : ' Thank you, ' + name + '! Your message has been sent. We\'ll get back to you soon.');
-        contactForm.reset();
-    } else {
-        alert(currentLang === 'am' ? 'እባክዎ ሁሉንም መስኮች ይሙሉ።' : 'Please fill in all fields.');
-    }
-});
+
+if (contactForm) {
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    const formStatus = document.getElementById('formStatus');
+
+    const FORM_TEXT = {
+        en: {
+            required: 'Please fill in all fields.',
+            sending: 'Sending...',
+            success: name => 'Thank you, ' + name + '! Your message has been sent. We will get back to you soon.',
+            error: 'Sorry, your message could not be sent. Please try again, or call +251 91 162 2728.'
+        },
+        am: {
+            required: 'እባክዎ ሁሉንም መስኮች ይሙሉ።',
+            sending: 'በመላክ ላይ...',
+            success: name => 'እናመሰግናለን፣ ' + name + '! መልእክትዎ ተልኳል። በቅርቡ እንመልስልዎታለን።',
+            error: 'ይቅርታ፣ መልእክትዎ አልተላከም።'
+        }
+    };
+
+    const showStatus = (message, type) => {
+        formStatus.textContent = message;
+        formStatus.className = 'form-status ' + type;      // "success" or "error"
+        formStatus.hidden = false;
+    };
+
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const t = FORM_TEXT[currentLang];
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const message = document.getElementById('message').value.trim();
+
+        if (!name || !email || !message) {
+            showStatus(t.required, 'error');
+            return;
+        }
+
+        formStatus.hidden = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = t.sending;
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);   
+
+        try {
+            const response = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: new FormData(contactForm),
+                signal: controller.signal
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || 'Rejected');
+
+            contactForm.reset();
+            showStatus(t.success(name), 'success');
+        } catch (err) {
+            showStatus(t.error, 'error');
+        } finally {
+            clearTimeout(timer);
+            submitBtn.disabled = false;
+            submitBtn.textContent = submitBtn.dataset[currentLang] || 'Send Message';
+        }
+    });
+}
               // ===== DEPARTMENT MODAL (Description Only) =====
 const modal = document.getElementById('departmentModal');
 const modalClose = document.getElementById('modalClose');
